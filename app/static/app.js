@@ -362,7 +362,8 @@ function oauthSetup(p) {
 }
 const G_LOGO = `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>`;
 const LI_LOGO = `<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0A66C2"/><path fill="#fff" d="M7.1 9.5H4.6V19h2.5V9.5zM5.8 5.2a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM19.4 13.6c0-2.6-1.4-4.3-3.6-4.3-1.2 0-2 .6-2.4 1.2V9.5H11V19h2.5v-5.1c0-1.3.6-2.1 1.7-2.1s1.6.8 1.6 2.1V19h2.6v-5.4z"/></svg>`;
-async function showAuth(mode = 'login') {
+async function showAuth(mode) {
+  mode = mode || new URLSearchParams(location.search).get('auth_mode') || 'login';
   $('#nav').innerHTML = ''; $('#me').innerHTML = ''; $('#wiz')?.remove();
   const prov = await fetch('/api/auth/providers').then(r => r.json()); const err = new URLSearchParams(location.search).get('auth_error');
   const reg = mode === 'register', anySocial = prov.google || prov.linkedin, verb = reg ? 'Registrarse' : 'Iniciar sesión';
@@ -379,8 +380,8 @@ async function showAuth(mode = 'login') {
     <p class="hint" style="font-size:12px">Al continuar aceptas las <a href="/terminos">condiciones</a> y la <a href="/privacidad">privacidad</a>.</p>
     ${!prov.online && !(prov.google && prov.linkedin) ? `<p class="hint" style="font-size:12px">Administrador: <a href="#" id="setg">${prov.google ? '' : 'activar Google'}</a> ${!prov.google && !prov.linkedin ? '·' : ''} <a href="#" id="setl">${prov.linkedin ? '' : 'activar LinkedIn'}</a></p>` : ''}</div>`;
   $('#tl').onclick = () => showAuth('login'); $('#tr').onclick = () => showAuth('register');
-  $('#gg').onclick = () => prov.google ? location.href = '/auth/google' : (!prov.online && oauthSetup('google'));
-  $('#li').onclick = () => prov.linkedin ? location.href = '/auth/linkedin' : (!prov.online && oauthSetup('linkedin'));
+  $('#gg').onclick = () => prov.google ? location.href = '/auth/google?mode=' + mode : (!prov.online && oauthSetup('google'));
+  $('#li').onclick = () => prov.linkedin ? location.href = '/auth/linkedin?mode=' + mode : (!prov.online && oauthSetup('linkedin'));
   if ($('#setg')) $('#setg').onclick = e => { e.preventDefault(); oauthSetup('google'); };
   if ($('#setl')) $('#setl').onclick = e => { e.preventDefault(); oauthSetup('linkedin'); };
   const go = async () => {

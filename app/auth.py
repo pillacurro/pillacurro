@@ -173,8 +173,9 @@ def oauth_start(p):
         return redirect("/?auth_error=" + urllib.parse.quote("Ese acceso aún no está configurado"))
     state = secrets.token_urlsafe(16)
     session["oauth_state"] = state
+    session["oauth_mode"] = "register" if request.args.get("mode") == "register" else "login"
     q = urllib.parse.urlencode({"response_type": "code", "client_id": cfg(p)[0], "redirect_uri": redirect_uri(p),
-                                "scope": PROVIDERS[p]["scope"], "state": state})
+                                "scope": PROVIDERS[p]["scope"], "state": state, **({"prompt": "select_account"} if p == "google" else {})})
     return redirect(PROVIDERS[p]["auth"] + "?" + q)
 
 
@@ -200,6 +201,9 @@ def oauth_callback(p):
     with db.acc() as c:
         u = c.execute("SELECT * FROM users WHERE provider=? AND provider_id=?", (p, pid)).fetchone() or \
             (c.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone() if email else None)
+    mode = session.pop("oauth_mode", "login")
+    if not u and mode == "login":
+        return redirect("/?auth_mode=register&auth_error=" + urllib.parse.quote("No tienes cuenta todavía. Pulsa «Registrarse» para crearla."))
     uid = u["id"] if u else create_user(email or f"{p}-{pid}@sin-email.local", name, None, p, pid, info.get("picture", ""))
     login_user(uid)
     if p == "linkedin":
