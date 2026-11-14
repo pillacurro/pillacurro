@@ -360,21 +360,28 @@ function oauthSetup(p) {
   $('#ox').onclick = () => ov.remove();
   $('#og').onclick = async () => { try { await fetch('/api/auth/oauth-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ provider: p, client_id: $('#oi').value, client_secret: $('#os').value }) }).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error); }); ov.remove(); showAuth(); } catch (x) { flash($('#om'), x.message, 1); } };
 }
+const G_LOGO = `<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>`;
+const LI_LOGO = `<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0A66C2"/><path fill="#fff" d="M7.1 9.5H4.6V19h2.5V9.5zM5.8 5.2a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM19.4 13.6c0-2.6-1.4-4.3-3.6-4.3-1.2 0-2 .6-2.4 1.2V9.5H11V19h2.5v-5.1c0-1.3.6-2.1 1.7-2.1s1.6.8 1.6 2.1V19h2.6v-5.4z"/></svg>`;
 async function showAuth(mode = 'login') {
   $('#nav').innerHTML = ''; $('#me').innerHTML = ''; $('#wiz')?.remove();
   const prov = await fetch('/api/auth/providers').then(r => r.json()); const err = new URLSearchParams(location.search).get('auth_error');
-  const reg = mode === 'register';
-  $('#main').innerHTML = `<div class="card" style="max-width:420px;margin:30px auto"><h2 style="font-size:20px">${reg ? 'Crea tu cuenta' : 'Inicia sesión'} ${hq('acceso')}</h2>
+  const social = (id, logo, txt, on) => on ? `<button class="s" id="${id}" style="width:100%;margin:6px 0;padding:11px;font-size:16px;display:flex;gap:10px;align-items:center;justify-content:center">${logo}<span>${txt}</span></button>` : '';
+  const reg = mode === 'register', anySocial = prov.google || prov.linkedin;
+  $('#main').innerHTML = `<div class="card" style="max-width:380px;margin:30px auto;text-align:center"><div style="font-size:38px">🎯</div><h2 style="font-size:22px;margin:4px 0">PillaCurro</h2>
+    <p class="hint">Entra para buscar trabajo en piloto automático</p>
     ${err ? `<p class="err">${esc(err)}</p>` : ''}
-    <button class="s" id="gg" style="width:100%;margin:4px 0">${prov.google ? 'Continuar con Google' : 'Activar Google (1 vez)'}</button>
-    <button class="s" id="li" style="width:100%;margin:4px 0">${prov.linkedin ? 'Continuar con LinkedIn' : 'Activar LinkedIn (1 vez)'}</button>
-    ${prov.online ? '<p class="hint" style="background:rgba(178,106,0,.15);padding:8px;border-radius:6px">⚠️ Versión de pruebas online: no subas datos sensibles. Los datos pueden borrarse al actualizar la app.</p>' : ''}
-    ${prov.google && prov.linkedin ? '' : '<p class="hint">Para entrar con Google o LinkedIn hay que activarlos una sola vez (pulsa el botón y te guío).</p>'}
-    <p class="hint" style="text-align:center">— o con tu email —</p>
-    ${reg ? '<label>Tu nombre</label><input id="an">' : ''}<label>Email</label><input id="ae" type="email" autocomplete="email"><label>Contraseña ${reg ? '(mínimo 8 caracteres)' : ''}</label><input id="ap" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}">
-    <p id="am"></p><button class="b" id="ago" style="width:100%">${reg ? 'Crear cuenta' : 'Entrar'}</button>
-    <p class="hint" style="text-align:center"><a href="#" id="asw">${reg ? 'Ya tengo cuenta' : 'Crear una cuenta nueva'}</a></p></div>`;
-  $('#gg').onclick = () => prov.google ? location.href = '/auth/google' : oauthSetup('google'); $('#li').onclick = () => prov.linkedin ? location.href = '/auth/linkedin' : oauthSetup('linkedin');
+    ${social('gg', G_LOGO, 'Continuar con Google', prov.google)}${social('li', LI_LOGO, 'Continuar con LinkedIn', prov.linkedin)}
+    ${prov.online ? '<p class="hint" style="background:rgba(178,106,0,.15);padding:8px;border-radius:6px">⚠️ Versión de pruebas: no subas datos sensibles. Los datos pueden borrarse al actualizar.</p>' : ''}
+    <details ${anySocial && !reg ? '' : 'open'} style="text-align:left;margin-top:10px"><summary class="hint" style="cursor:pointer;text-align:center">${anySocial ? 'Usar email y contraseña' : 'Entrar con email y contraseña'}</summary>
+      ${reg ? '<label>Tu nombre</label><input id="an">' : ''}<label>Email</label><input id="ae" type="email" autocomplete="email"><label>Contraseña ${reg ? '(mínimo 8 caracteres)' : ''}</label><input id="ap" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}">
+      <p id="am"></p><button class="b" id="ago" style="width:100%">${reg ? 'Crear cuenta' : 'Entrar'}</button>
+      <p class="hint" style="text-align:center"><a href="#" id="asw">${reg ? 'Ya tengo cuenta' : 'Crear una cuenta con email'}</a></p></details>
+    <p class="hint" style="font-size:12px">Al continuar aceptas las <a href="/terminos">condiciones</a> y la <a href="/privacidad">privacidad</a>.</p>
+    ${!prov.online && !(prov.google && prov.linkedin) ? `<p class="hint" style="font-size:12px">Administrador: <a href="#" id="setg">${prov.google ? '' : 'activar Google'}</a> ${!prov.google && !prov.linkedin ? '·' : ''} <a href="#" id="setl">${prov.linkedin ? '' : 'activar LinkedIn'}</a></p>` : ''}</div>`;
+  if (prov.google) $('#gg').onclick = () => location.href = '/auth/google';
+  if (prov.linkedin) $('#li').onclick = () => location.href = '/auth/linkedin';
+  if ($('#setg')) $('#setg').onclick = e => { e.preventDefault(); oauthSetup('google'); };
+  if ($('#setl')) $('#setl').onclick = e => { e.preventDefault(); oauthSetup('linkedin'); };
   $('#asw').onclick = e => { e.preventDefault(); history.replaceState(null, '', location.pathname); showAuth(reg ? 'login' : 'register'); };
   const go = async () => {
     try { await fetch('/api/auth/' + (reg ? 'register' : 'login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: $('#an')?.value, email: $('#ae').value, password: $('#ap').value }) }).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error); });
