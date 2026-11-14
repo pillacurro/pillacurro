@@ -365,24 +365,24 @@ const LI_LOGO = `<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="tr
 async function showAuth(mode = 'login') {
   $('#nav').innerHTML = ''; $('#me').innerHTML = ''; $('#wiz')?.remove();
   const prov = await fetch('/api/auth/providers').then(r => r.json()); const err = new URLSearchParams(location.search).get('auth_error');
-  const social = (id, logo, txt, on) => on ? `<button class="s" id="${id}" style="width:100%;margin:6px 0;padding:11px;font-size:16px;display:flex;gap:10px;align-items:center;justify-content:center">${logo}<span>${txt}</span></button>` : '';
-  const reg = mode === 'register', anySocial = prov.google || prov.linkedin;
+  const reg = mode === 'register', anySocial = prov.google || prov.linkedin, verb = reg ? 'Registrarse' : 'Iniciar sesión';
+  const social = (id, logo, name, on) => `<button class="s" id="${id}" ${on || !prov.online ? '' : 'disabled'} style="width:100%;margin:6px 0;padding:11px;font-size:16px;display:flex;gap:10px;align-items:center;justify-content:center">${logo}<span>${verb} con ${name}${on ? '' : (prov.online ? ' (próximamente)' : '')}</span></button>`;
   $('#main').innerHTML = `<div class="card" style="max-width:380px;margin:30px auto;text-align:center"><div style="font-size:38px">🎯</div><h2 style="font-size:22px;margin:4px 0">PillaCurro</h2>
-    <p class="hint">Entra para buscar trabajo en piloto automático</p>
+    <div style="display:flex;gap:6px;margin:10px 0"><button class="${reg ? 's' : 'b'}" id="tl" style="flex:1">Iniciar sesión</button><button class="${reg ? 'b' : 's'}" id="tr" style="flex:1">Registrarse</button></div>
     ${err ? `<p class="err">${esc(err)}</p>` : ''}
-    ${social('gg', G_LOGO, 'Continuar con Google', prov.google)}${social('li', LI_LOGO, 'Continuar con LinkedIn', prov.linkedin)}
+    ${social('gg', G_LOGO, 'Google', prov.google)}${social('li', LI_LOGO, 'LinkedIn', prov.linkedin)}
     ${prov.online ? '<p class="hint" style="background:rgba(178,106,0,.15);padding:8px;border-radius:6px">⚠️ Versión de pruebas: no subas datos sensibles. Los datos pueden borrarse al actualizar.</p>' : ''}
-    <details ${anySocial && !reg ? '' : 'open'} style="text-align:left;margin-top:10px"><summary class="hint" style="cursor:pointer;text-align:center">${anySocial ? 'Usar email y contraseña' : 'Entrar con email y contraseña'}</summary>
+    <details ${anySocial ? '' : 'open'} style="text-align:left;margin-top:10px"><summary class="hint" style="cursor:pointer;text-align:center">${reg ? 'Registrarse con email' : 'Iniciar sesión con email'}</summary>
       ${reg ? '<label>Tu nombre</label><input id="an">' : ''}<label>Email</label><input id="ae" type="email" autocomplete="email"><label>Contraseña ${reg ? '(mínimo 8 caracteres)' : ''}</label><input id="ap" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}">
       <p id="am"></p><button class="b" id="ago" style="width:100%">${reg ? 'Crear cuenta' : 'Entrar'}</button>
-      <p class="hint" style="text-align:center"><a href="#" id="asw">${reg ? 'Ya tengo cuenta' : 'Crear una cuenta con email'}</a></p></details>
+      </details>
     <p class="hint" style="font-size:12px">Al continuar aceptas las <a href="/terminos">condiciones</a> y la <a href="/privacidad">privacidad</a>.</p>
     ${!prov.online && !(prov.google && prov.linkedin) ? `<p class="hint" style="font-size:12px">Administrador: <a href="#" id="setg">${prov.google ? '' : 'activar Google'}</a> ${!prov.google && !prov.linkedin ? '·' : ''} <a href="#" id="setl">${prov.linkedin ? '' : 'activar LinkedIn'}</a></p>` : ''}</div>`;
-  if (prov.google) $('#gg').onclick = () => location.href = '/auth/google';
-  if (prov.linkedin) $('#li').onclick = () => location.href = '/auth/linkedin';
+  $('#tl').onclick = () => showAuth('login'); $('#tr').onclick = () => showAuth('register');
+  $('#gg').onclick = () => prov.google ? location.href = '/auth/google' : (!prov.online && oauthSetup('google'));
+  $('#li').onclick = () => prov.linkedin ? location.href = '/auth/linkedin' : (!prov.online && oauthSetup('linkedin'));
   if ($('#setg')) $('#setg').onclick = e => { e.preventDefault(); oauthSetup('google'); };
   if ($('#setl')) $('#setl').onclick = e => { e.preventDefault(); oauthSetup('linkedin'); };
-  $('#asw').onclick = e => { e.preventDefault(); history.replaceState(null, '', location.pathname); showAuth(reg ? 'login' : 'register'); };
   const go = async () => {
     try { await fetch('/api/auth/' + (reg ? 'register' : 'login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: $('#an')?.value, email: $('#ae').value, password: $('#ap').value }) }).then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error); });
       history.replaceState(null, '', location.pathname); boot(); } catch (x) { flash($('#am'), x.message, 1); }
