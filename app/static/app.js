@@ -76,7 +76,8 @@ const flash = (el, t, bad) => { el.innerHTML = `<span class="${bad ? 'err' : 'ms
 
 // ---------- asistente (modal) ----------
 let W; // {p, c, step, only, ports}
-const STEPS = ['cv', 'datos', 'tec', 'busca', 'donde', 'portales', 'permisos'];
+const STEPS = ['cv', 'datos', 'tec', 'busca', 'donde', 'permisos', 'portales'];
+const FLOW = 6; // pasos de la secuencia; «portales» se configura después, desde Inicio
 const TITLES = { cv: 'Tu CV', datos: 'Tus datos', tec: 'Habilidades e idiomas', busca: 'Qué buscas', donde: 'Dónde y cuánto', portales: 'Portales', permisos: 'Permisos' };
 async function openWizard(step = 0, only = false) {
   W = { p: await api('/api/profile'), c: await api('/api/criteria'), step, only, ports: await api('/api/portals') };
@@ -92,7 +93,7 @@ document.addEventListener('mousedown', e => { if (e.target.id === 'wiz') dismiss
 let G = {}; // componentes del paso actual
 function wiz() {
   const k = STEPS[W.step], p = W.p, pe = p.personal, c = W.c; G = {};
-  const dots = W.only ? '' : `<div class="dots">${STEPS.map((_, i) => `<i class="${i <= W.step ? 'on' : ''}"></i>`).join('')}</div>`;
+  const dots = W.only ? '' : `<div class="dots">${STEPS.slice(0, FLOW).map((_, i) => `<i class="${i <= W.step ? 'on' : ''}"></i>`).join('')}</div>`;
   const B = {
     cv: () => `<p>Sube tu CV (PDF, DOCX o TXT) y rellenaré lo que pueda. Se lee en tu equipo; no se envía a nadie.</p>
       <input type="file" id="cv" accept=".pdf,.docx,.txt"><div id="cvm"></div>
@@ -105,20 +106,23 @@ function wiz() {
       <div><label>Estudios</label>${sel('ed', ['ESO / Bachillerato', 'FP Grado Medio', 'FP Grado Superior', 'Grado universitario', 'Máster', 'Doctorado', 'Autodidacta'], p.education, 'Elige…')}</div>
       <div><label>¿Puedes trabajar en España?</label>${sel('wa', ['Sí, nacionalidad española/UE', 'Sí, con permiso de trabajo', 'No'], p.work_authorization, 'Elige…')}</div>
       <div><label>¿Necesitas patrocinio de visado?</label>${sel('sp', ['No', 'Sí'], p.needs_sponsorship, 'Elige…')}</div></div>`,
-    tec: () => `<label>Habilidades y años REALES de experiencia (lo que no pongas se responderá "0 años")</label><div id="sk"></div><label>Idiomas y nivel REAL</label><div id="la"></div>`,
+    tec: () => `${p.from_cv ? '<p class="hint">✨ He rellenado esto con lo que he podido leer de tu CV. Revísalo y corrige lo que haga falta.</p>' : ''}<label>Habilidades y años REALES de experiencia (lo que no pongas se responderá "0 años")</label><div id="sk"></div><label>Idiomas y nivel REAL</label><div id="la"></div>`,
     busca: () => `<div id="orient"></div><label>Puestos que buscas</label><div id="ro"></div><label>Modalidad (por orden de preferencia)</label><div id="mo"></div><label>Contrato</label><div id="co"></div>`,
-    donde: () => `<label>Zonas</label><div id="zo"></div><label>Salario esperado (bruto/año): rango</label><div class="row">${sel('sa', SAL, c.min_salary, 'Desde…')}${sel('sb', SAL, c.max_salary, 'Hasta…')}</div>
-      <label>Idiomas de las ofertas</label><div id="li"></div><label>Líneas rojas (nunca postular)</label><div id="de"></div>`,
+    donde: () => `<label>Lugar</label><div id="zo"></div><label>Salario esperado (bruto/año): rango</label><div class="row">${sel('sa', SAL, c.min_salary, 'Desde…')}${sel('sb', SAL, c.max_salary, 'Hasta…')}</div>
+      <details style="margin-top:14px"><summary class="hint" style="cursor:pointer">Opciones avanzadas (opcional)</summary>
+      <label>Idioma de las ofertas (por defecto, español)</label><div id="li"></div><label>Líneas rojas (nunca postular)</label><div id="de"></div></details>`,
     portales: () => `<p class="hint">Marca dónde quieres buscar y en cuáles ya tienes la sesión iniciada en tu Chrome. Yo nunca escribo contraseñas ni creo cuentas.</p>` +
       W.ports.map(x => `<div class="pt ${x.selected ? (x.access ? 'ok' : 'no') : ''}" style="margin:6px 0"><label style="margin:0;color:inherit"><input type="checkbox" style="width:auto" data-s="${esc(x.name)}" ${x.selected ? 'checked' : ''}> <b style="display:inline">${esc(x.name)}</b> <span class="hint">${esc(x.note)}</span></label>
       ${x.selected ? `<label style="margin:4px 0 0;color:inherit"><input type="checkbox" style="width:auto" data-a="${esc(x.name)}" ${x.access ? 'checked' : ''}> Ya tengo sesión iniciada · <a href="${x.url}" target="_blank" rel="noopener noreferrer">abrir</a></label>` : ''}</div>`).join(''),
     permisos: () => `<label>¿Postular automáticamente?</label>${sel('au', [['false', 'No: apruebo yo cada oferta'], ['true', 'Sí: postular solo si el encaje llega al mínimo']], String(!!c.auto_apply))}
-      <label>¿Leer tu Gmail para detectar respuestas? (solo lectura)</label>${sel('gm', [['false', 'No'], ['true', 'Sí, solo lectura']], String(!!c.gmail_read))}
       <div class="row"><div><label>Encaje mínimo</label>${sel('mf', range(30, 90, 5), c.min_fit)}</div><div><label>Máx. postulaciones por sesión</label>${sel('mx', [5, 10, 20, 30, 50], c.max_per_session)}</div></div>
+      <details style="margin:10px 0"><summary class="hint" style="cursor:pointer">Opciones avanzadas (opcional)</summary>
+        <label>¿Leer tu Gmail para detectar respuestas de las empresas? (solo lectura)</label>${sel('gm', [['false', 'No'], ['true', 'Sí, conectar mi Gmail']], String(!!c.gmail_read))}
+        <p class="hint">Si eliges «Sí», al guardar te llevo a Google para que autorices la lectura de tu correo. Puedes desconectarlo cuando quieras desde tu Perfil.</p></details>
       <p><label style="color:inherit"><input type="checkbox" id="cf" style="width:auto" ${p.confirmed ? 'checked' : ''}> Confirmo que mi perfil es veraz. Sin esto no se postula.</label></p>`,
   };
-  const last = W.step === STEPS.length - 1;
-  $('#wiz').innerHTML = `<div class="modal"><button class="s" id="x" title="Cerrar" style="float:right">✕</button>${dots}<h2>${W.only ? '' : `Paso ${W.step + 1} de ${STEPS.length} · `}${TITLES[k]} ${hq(k)}</h2><div>${B[k]()}</div>
+  const last = W.step === FLOW - 1;
+  $('#wiz').innerHTML = `<div class="modal"><button class="s" id="x" title="Cerrar" style="float:right">✕</button>${dots}<h2>${W.only ? '' : `Paso ${W.step + 1} de ${FLOW} · `}${TITLES[k]} ${hq(k)}</h2><div>${B[k]()}</div>
     <div class="foot"><span>${W.step > 0 && !W.only ? '<button class="s" id="bk">← Atrás</button>' : '<button class="s" id="cl">Cerrar</button>'}</span><button class="b" id="nx">${last || W.only ? 'Guardar' : 'Siguiente →'}</button></div></div>`;
   if (k === 'cv') $('#mk').onclick = buildCV;
   if (k === 'cv') $('#cv').onchange = async e => {
@@ -131,7 +135,7 @@ function wiz() {
     G.la = rows($('#la'), LANG, p.languages.map(l => ({ n: l.name, v: l.level || '' })), LVL, 'Nivel…');
   }
   if (k === 'busca') { showOrientation(); G.ro = chips($('#ro'), roleOpts(p.sector), c.roles, true); G.mo = chips($('#mo'), ['Remoto', 'Híbrido', 'Presencial'], c.modes.map(cap), false); G.co = chips($('#co'), ['Jornada completa', 'Media jornada', 'Prácticas', 'Temporal'], c.contracts.map(cap), false); }
-  if (k === 'donde') { G.zo = chips($('#zo'), PROV, c.zones, false); G.li = chips($('#li'), ['Español', 'Inglés', 'Catalán', 'Euskera', 'Gallego'], c.languages.map(cap), false); G.de = chips($('#de'), DEAL, c.dealbreakers, true); }
+  if (k === 'donde') { G.zo = chips($('#zo'), PROV, c.zones, false); G.li = chips($('#li'), ['Español', 'Inglés', 'Catalán', 'Euskera', 'Gallego'], (c.languages.length ? c.languages : ['español']).map(cap), false); G.de = chips($('#de'), DEAL, c.dealbreakers, true); }
   if (k === 'portales') $('.modal').onchange = async e => {
     const d = e.target.dataset; if (!d.s && !d.a) return;
     await api('/api/portals/' + encodeURIComponent(d.s || d.a), 'PATCH', d.s ? { selected: e.target.checked } : { access: e.target.checked });
@@ -140,7 +144,7 @@ function wiz() {
   $('#x').onclick = dismiss; if ($('#cl')) $('#cl').onclick = dismiss;
   if ($('#bk')) $('#bk').onclick = () => { collect(); W.step--; wiz(); };
   const modal = $('.modal'); ['input', 'change', 'click'].forEach(ev => modal.addEventListener(ev, () => setTimeout(markMissing, 0))); markMissing();
-  $('#nx').onclick = async () => { collect(); if (last || W.only) { await saveAll(); closeWizard(); } else { W.step++; wiz(); } };
+  $('#nx').onclick = async () => { collect(); if (last || W.only) { if ((await saveAll()) === 'gmail') return; closeWizard(); } else { W.step++; wiz(); } };
 }
 async function showOrientation() {
   const o = await api('/api/orientation'); if (!o.roles.length) { $('#orient').innerHTML = '<p class="hint">Si subes tu CV, te sugeriré por dónde orientar la búsqueda según tu campo.</p>'; return; }
@@ -206,13 +210,14 @@ function collect() {
   if (k === 'datos') { Object.assign(p.personal, { name: v('n'), email: v('e'), phone: v('t'), city: v('ci') }); p.sector = v('sc'); p.total_years = v('ty') === '' ? null : +v('ty'); p.education = v('ed'); p.work_authorization = v('wa'); p.needs_sponsorship = v('sp'); }
   if (k === 'tec') { p.skills = G.sk.get().map(x => ({ name: x.n, years: x.v === '' ? null : +x.v, notes: p.skills.find(s => s.name === x.n)?.notes || '' })); p.languages = G.la.get().map(x => ({ name: x.n, level: x.v })); }
   if (k === 'busca' && G.ro) { c.roles = G.ro.get(); c.modes = G.mo.get().map(x => x.toLowerCase()); c.contracts = G.co.get().map(x => x.toLowerCase()); }
-  if (k === 'donde') { c.zones = G.zo.get(); c.min_salary = v('sa') === '' ? null : +v('sa'); c.max_salary = v('sb') === '' ? null : +v('sb'); if (c.min_salary && c.max_salary && c.max_salary < c.min_salary) [c.min_salary, c.max_salary] = [c.max_salary, c.min_salary]; c.languages = G.li.get().map(x => x.toLowerCase()); c.dealbreakers = G.de.get(); }
+  if (k === 'donde') { c.zones = G.zo.get(); c.min_salary = v('sa') === '' ? null : +v('sa'); c.max_salary = v('sb') === '' ? null : +v('sb'); if (c.min_salary && c.max_salary && c.max_salary < c.min_salary) [c.min_salary, c.max_salary] = [c.max_salary, c.min_salary]; c.languages = G.li.get().map(x => x.toLowerCase()); if (!c.languages.length) c.languages = ['español']; c.dealbreakers = G.de.get(); }
   if (k === 'permisos') { c.auto_apply = v('au') === 'true'; c.gmail_read = v('gm') === 'true'; c.min_fit = +v('mf'); c.max_per_session = +v('mx'); p.confirmed = $('#cf').checked; }
 }
 async function saveAll() {
   const cur = await api('/api/criteria'); // los portales se guardan al marcarlos: no los pisamos
   await api('/api/criteria', 'PUT', { ...W.c, sites: cur.sites, access: cur.access });
   await api('/api/profile', 'PUT', W.p); await api('/api/setup', 'PUT', { done: true });
+  if (W.c.gmail_read) { const g = await api('/api/gmail'); if (!g.connected && g.available) { location.href = '/auth/gmail'; return 'gmail'; } }
 }
 
 // ---------- vistas ----------
@@ -296,9 +301,9 @@ async function notify() {
     const falta = [!pe.name && 'nombre', !pe.email && 'email', !pe.phone && 'teléfono', !pe.city && 'provincia', !p.sector && 'sector', p.total_years == null && 'años de experiencia', !p.education && 'estudios', !p.work_authorization && 'permiso de trabajo', !p.needs_sponsorship && 'visado'].filter(Boolean);
     if (falta.length) n.push({ id: 'datos:' + falta.join(), icon: '📝', t: 'Faltan datos', m: 'Completa: ' + falta.join(', ') + '.', b: 'Completar', f: () => openWizard(1, true) });
     if (!c.roles.length) n.push({ id: 'roles', icon: '🔎', t: 'Elige qué buscas', m: 'Aún no has indicado qué puestos te interesan.', b: 'Elegir', f: () => openWizard(3, true) });
-    if (!p.confirmed) n.push({ id: 'confirmar', icon: '✅', t: 'Confirma tu perfil', m: 'Sin confirmar que es veraz no puedo postular por ti.', b: 'Confirmar', f: () => openWizard(6, true) });
+    if (!p.confirmed) n.push({ id: 'confirmar', icon: '✅', t: 'Confirma tu perfil', m: 'Sin confirmar que es veraz no puedo postular por ti.', b: 'Confirmar', f: () => openWizard(5, true) });
   }
-  if (!chosen.length) n.push({ id: 'sin-portales', icon: '🌐', t: 'Elige portales', m: 'Marca dónde quieres que busque.', b: 'Elegir portales', f: () => openWizard(5, true) });
+  if (!chosen.length) n.push({ id: 'sin-portales', icon: '🌐', t: 'Elige portales', m: 'Marca dónde quieres que busque.', b: 'Elegir portales', f: () => openWizard(6, true) });
   else if (miss.length) n.push({ id: 'portales:' + miss.map(x => x.name).join(), icon: '🔴', t: `Faltan ${miss.length} portal${miss.length > 1 ? 'es' : ''} por iniciar sesión`, m: miss.map(x => x.name).join(', ') + '. Entra tú en tu navegador; yo nunca escribo contraseñas.', b: 'Ver portales', f: () => { tab = 'inicio'; location.hash = 'inicio'; show(); } });
   if (ap.length) n.push({ id: 'aprobar:' + ap.length, icon: '🔔', t: `${ap.length} cosa${ap.length > 1 ? 's' : ''} esperan tu decisión`, m: 'Aprueba o rechaza lo pendiente.', b: 'Revisar', f: () => { tab = 'pend'; location.hash = 'pend'; show(); } });
   NOTES = n.filter(x => !closedL().includes(x.id)); renderToasts();
@@ -410,10 +415,13 @@ const views = {
       <div class="chips">${(p.skills || []).map(s => `<span class="tag">${esc(s.name)}${s.years ? ' · ' + s.years + 'a' : ''}</span>`).join('') || '<span class="hint">Sin habilidades todavía</span>'}</div>
       <p class="hint">Idiomas: ${(p.languages || []).map(l => esc(l.name + ' ' + (l.level || ''))).join(', ') || '—'} · Busco: ${esc((c.roles || []).join(', ') || '—')}</p>
       <p><button class="b" id="ep">Editar mi perfil</button> <button class="s" id="nc">Subir otro CV</button></p></div>
+    <div class="card" id="gmcard"></div>
     <div class="card"><h2>Importar desde LinkedIn</h2>
       <p class="hint">${p.linkedin_connected ? '✅ Has entrado con LinkedIn: ya tengo tu nombre y email. ' : ''}LinkedIn no deja leer tu trayectoria directamente. Para orientar la app a tu sector, descarga tu perfil: en LinkedIn abre tu perfil → <b>Más</b> → <b>Guardar como PDF</b>, y súbelo aquí.</p>
       <input type="file" id="lipdf" accept=".pdf"><div id="lim"></div></div>
     ${o.roles?.length ? `<div class="card"><h2>🧭 Orientación según tu perfil ${hq('orient')}</h2><p><span class="tag">${esc(o.sector)}</span> <span class="tag">${esc(o.seniority)}</span></p><ul>${o.roles.map(r => `<li><b>${esc(r.role)}</b> <span class="hint">(${esc(r.skills.join(', '))})</span></li>`).join('')}</ul><p class="hint">${esc(o.tip)}</p></div>` : ''}`;
+    api('/api/gmail').then(g => { $('#gmcard').innerHTML = `<h2>Gmail</h2><p class="hint">${g.connected ? '✅ Conectado (solo lectura): detecto las respuestas de las empresas.' : 'No conectado. Es opcional y de solo lectura.'}</p><button class="s" id="gmb">${g.connected ? 'Desconectar Gmail' : 'Conectar Gmail'}</button>`;
+      $('#gmb').onclick = async () => { if (g.connected) { await api('/api/gmail', 'DELETE'); show(); } else location.href = '/auth/gmail'; }; if (!g.available) $('#gmb').disabled = true; });
     $('#lo').onclick = async () => { await api('/api/auth/logout', 'POST'); ME = null; location.hash = ''; boot(); };
     $('#ep').onclick = () => openWizard(1, true); $('#nc').onclick = () => openWizard(0, true);
     if ($('#pw')) $('#pw').onclick = async () => { const old = prompt('Contraseña actual'); if (!old) return; const nw = prompt('Contraseña nueva (mínimo 8 caracteres)'); if (!nw) return; try { await api('/api/auth/password', 'PUT', { old, new: nw }); flash($('#pm'), 'Contraseña cambiada'); } catch (x) { flash($('#pm'), x.message, 1); } };
@@ -439,7 +447,7 @@ const views = {
     const rd = await api('/api/ready'), go = $('#go'); go.disabled = !rd.ready;
     $('#gomiss').innerHTML = rd.ready ? '<p class="msg" style="margin:0 0 8px">✅ Todo listo para buscar</p>' : `<p class="err" style="margin:0 0 8px">🔴 Para lanzar la búsqueda te falta: ${esc(rd.missing.join(', '))}.</p>`;
     go.onclick = launch;
-    $('#wz').onclick = () => openWizard(0); $('#pp').onclick = () => openWizard(5, true);
+    $('#wz').onclick = () => openWizard(0); $('#pp').onclick = () => openWizard(6, true);
     $('#main').onclick = e => { const n = e.target.dataset.conn; if (n) connectPortal(n); };
     $('#main').onchange = async e => { const n = e.target.dataset.a; if (n) { await api('/api/portals/' + encodeURIComponent(n), 'PATCH', { access: e.target.checked }); show(); } };
   },

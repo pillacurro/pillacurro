@@ -184,10 +184,59 @@ def _post(url, data):
     return json.load(urllib.request.urlopen(req, timeout=20))
 
 
+@bp.get("/auth/gmail")
+def gmail_start():
+    """Pide permiso de SOLO LECTURA del correo; el usuario debe tener sesión iniciada."""
+    if not session.get("uid") or not cfg("google"):
+        return redirect("/")
+    state = secrets.token_urlsafe(16)
+    session["oauth_state"], session["oauth_purpose"] = state, "gmail"
+    with db.acc() as c:
+        u = c.execute("SELECT email FROM users WHERE id=?", (session["uid"],)).fetchone()
+    q = urllib.parse.urlencode({"response_type": "code", "client_id": cfg("google")[0], "redirect_uri": redirect_uri("google"),
+                                "scope": "openid email https://www.googleapis.com/auth/gmail.readonly", "state": state,
+                                "access_type": "offline", "prompt": "consent select_account",
+                                **({"login_hint": u["email"]} if u and "@sin-email" not in u["email"] else {})})
+    return redirect(PROVIDERS["google"]["auth"] + "?" + q)
+
+
+@bp.get("/api/gmail")
+def gmail_status():
+    db.set_user(session.get("uid"))
+    return jsonify(connected=bool((db.kv_get("gmail") or {}).get("refresh_token")), available=bool(cfg("google")))
+
+
+@bp.delete("/api/gmail")
+def gmail_disconnect():
+    db.set_user(session.get("uid"))
+    g = db.kv_get("gmail") or {}
+    if g.get("refresh_token"):
+        try:
+            _post("https://oauth2.googleapis.com/revoke", {"token": g["refresh_token"]})
+        except Exception:
+            pass
+    db.kv_set("gmail", {})
+    crit = db.kv_get("criteria", {}) or {}
+    crit["gmail_read"] = False
+    db.kv_set("criteria", crit)
+    return jsonify(ok=True)
+
+
 @bp.get("/auth/<p>/callback")
 def oauth_callback(p):
     if p not in PROVIDERS or not cfg(p) or request.args.get("state") != session.pop("oauth_state", None) or not request.args.get("code"):
+        session.pop("oauth_purpose", None)
         return redirect("/?auth_error=" + urllib.parse.quote("No se pudo iniciar sesión (acceso cancelado o caducado)"))
+    if session.pop("oauth_purpose", None) == "gmail" and p == "google" and session.get("uid"):
+        try:
+            cid, sec = cfg("google")
+            tok = _post(PROVIDERS["google"]["token"], {"grant_type": "authorization_code", "code": request.args["code"],
+                                                       "redirect_uri": redirect_uri("google"), "client_id": cid, "client_secret": sec})
+            db.set_user(session["uid"])
+            db.kv_set("gmail", {"refresh_token": tok.get("refresh_token", ""), "scope": tok.get("scope", "")})
+            return redirect("/?gmail=ok")
+        except Exception as e:
+            return redirect("/?gmail=error")
     try:
         cid, sec = cfg(p)
         tok = _post(PROVIDERS[p]["token"], {"grant_type": "authorization_code", "code": request.args["code"], "redirect_uri": redirect_uri(p),

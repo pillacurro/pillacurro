@@ -76,7 +76,7 @@ SECTORS = {
                   ("Asesor/a laboral", "asesor laboral", ["Derecho laboral", "Nóminas"]), ("Paralegal", "paralegal", ["Contratos"])]},
     "Otro": {
         "words": [],
-        "skills": ["Atención al cliente", "Trabajo en equipo", "Office", "Excel", "Idiomas", "Carnet de conducir", "Limpieza", "Cuidado de personas"],
+        "skills": ["Atención al cliente", "Trabajo en equipo", "Office", "Excel", "Carnet de conducir", "Limpieza", "Cuidado de personas"],
         "roles": [("Auxiliar administrativo/a", "auxiliar administrativo", ["Office", "Excel"]), ("Atención al cliente", "atención al cliente", ["Atención al cliente"]),
                   ("Operario/a / Peón", "operario", ["Trabajo en equipo"]), ("Personal de limpieza", "limpieza", ["Limpieza"]), ("Cuidador/a de personas", "cuidador", ["Cuidado de personas"])]},
 }
@@ -129,6 +129,29 @@ def _has(text: str, skill: str) -> bool:
     return bool(re.search(pat, text, 0 if skill in CASE_SENSITIVE else re.I))
 
 
+SKILL_HEAD = re.compile(r"^\s*(habilidades|competencias|skills|tecnolog[ií]as|conocimientos|herramientas|aptitudes|stack)[^\n:]{0,25}:?\s*(.*)$", re.I)
+
+
+def _section_skills(lines, known):
+    """Habilidades escritas libremente en la sección 'Habilidades/Competencias/Skills…' del CV."""
+    out, i = [], 0
+    while i < len(lines):
+        m = SKILL_HEAD.match(lines[i])
+        if m and len(lines[i]) < 120:
+            chunk = [m.group(2)] if m.group(2) else []
+            j = i + 1
+            while j < len(lines) and len(chunk) < 12 and not SKILL_HEAD.match(lines[j]) and not re.match(r"^(experiencia|formaci[oó]n|educaci[oó]n|idiomas|languages|estudios|perfil|contacto)\b", lines[j], re.I):
+                chunk.append(lines[j]); j += 1
+            for part in re.split(r"[,;•·|\n●▪◦*]|\s-\s|\s/\s", " , ".join(chunk)):
+                s = re.sub(r"^[\s\-–•·]+|[\s.]+$", "", part)
+                if 2 <= len(s) <= 30 and len(s.split()) <= 4 and not re.search(r"\d{3,}|@|http", s) and s.lower() not in known:
+                    known.add(s.lower()); out.append(s)
+            i = j
+        else:
+            i += 1
+    return out[:25]
+
+
 def parse_cv(text: str) -> dict:
     """Perfil preconfigurado a partir del CV subido: contacto, sector, habilidades, idiomas y años."""
     lines = [l.strip() for l in text.splitlines() if l.strip()]
@@ -150,6 +173,9 @@ def parse_cv(text: str) -> dict:
             if s not in names:
                 names.add(s)
                 skills.append({"name": s, "years": _skill_years(text, s), "notes": ""})
+    known = {s["name"].lower() for s in skills}
+    for s in _section_skills(lines, known):
+        skills.append({"name": s, "years": _skill_years(text, s), "notes": ""})
     langs = []
     for lang, pat in LANGS.items():
         for l in lines:
