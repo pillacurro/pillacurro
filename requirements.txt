@@ -1,0 +1,5 @@
+flask>=3.0
+pypdf>=4.0
+python-docx>=1.1
+openpyxl>=3.1
+# Opcional (se instala desde la app con un clic): playwright>=1.40

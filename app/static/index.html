@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PillaCurro</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1d2330;--mut:#6b7385;--ac:#1f3a5f;--bd:#dde1e8;--ok:#2e7d32;--warn:#b26a00}
+@media (prefers-color-scheme:dark){:root{--bg:#14171d;--card:#1d222b;--tx:#e6e9ef;--mut:#99a1b3;--ac:#7fa8e0;--bd:#323a48}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,sans-serif}
+header{padding:14px 20px;border-bottom:1px solid var(--bd);background:var(--card)}h1{font-size:18px;margin:0}
+nav{display:flex;gap:4px;flex-wrap:wrap;padding:8px 16px;background:var(--card);border-bottom:1px solid var(--bd)}
+nav button{border:0;background:none;color:var(--mut);padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit}
+nav button.on{background:var(--ac);color:#fff}main{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:14px;margin-bottom:14px}
+h2{font-size:16px;margin:0 0 10px}label{display:block;font-size:13px;color:var(--mut);margin:8px 0 2px}
+input,select,textarea{width:100%;padding:7px 9px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--tx);font:inherit}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+button.b{background:var(--ac);color:#fff;border:0;padding:8px 14px;border-radius:6px;cursor:pointer;font:inherit}
+button.s{background:none;border:1px solid var(--bd);color:var(--tx);padding:5px 9px;border-radius:6px;cursor:pointer;font:inherit}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px;border-bottom:1px solid var(--bd);vertical-align:top}
+th{color:var(--mut);font-weight:600}.msg{color:var(--ok);margin-left:10px}.err{color:#c62828}.hint{color:var(--mut);font-size:13px}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;background:var(--bg);border:1px solid var(--bd);font-size:12px}
+.tbl{overflow-x:auto}
+button.b.big{font-size:17px;padding:12px 22px}button:disabled{opacity:.45;cursor:not-allowed}
+input.miss,select.miss,textarea.miss{border:2px solid #c62828;background:rgba(198,40,40,.08)}
+div.miss,p.miss{outline:2px solid #c62828;outline-offset:2px;border-radius:6px}label.miss-l{color:#c62828;font-weight:600}
+#toasts{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:8;max-width:calc(100vw - 28px)}
+.toast{background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--ac);border-radius:10px;padding:10px 12px;width:340px;max-width:100%;box-shadow:0 6px 24px rgba(0,0,0,.25);animation:up .25s ease}
+.toast.min{width:auto;padding:5px 8px 5px 12px;border-radius:20px;cursor:pointer;font-size:13px;display:flex;gap:8px;align-items:center}
+.toast .tx{float:right;padding:0 6px;margin-left:8px;border:0}.toast.min .tx{float:none;margin:0}
+@keyframes up{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+button.q{width:20px;height:20px;border-radius:50%;border:1px solid var(--ac);background:none;color:var(--ac);font:12px/1 system-ui;cursor:pointer;padding:0;vertical-align:middle;margin-left:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.pt{border:2px solid var(--bd);border-radius:8px;padding:10px}.pt.ok{border-color:#2e7d32;background:rgba(46,125,50,.12)}.pt.no{border-color:#c62828;background:rgba(198,40,40,.08)}
+.pt b{display:block}.pt .hint{min-height:18px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.chip{background:var(--ac);color:#fff;border-radius:14px;padding:2px 10px;font-size:13px;cursor:pointer}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px;z-index:9}
+.modal{background:var(--card);border-radius:12px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:22px}
+.modal h2{font-size:19px}.dots{display:flex;gap:6px;margin-bottom:12px}.dots i{flex:1;height:5px;border-radius:3px;background:var(--bd)}.dots i.on{background:var(--ac)}
+.foot{display:flex;justify-content:space-between;margin-top:18px}.r2{display:grid;grid-template-columns:1fr 110px 34px;gap:6px;margin:4px 0}
+</style></head><body>
+<header style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h1>🎯 PillaCurro <span class="hint">— tu búsqueda de empleo en piloto automático · todo se guarda en tu equipo</span></h1><span id="me"></span></header>
+<nav id="nav"></nav><main id="main"></main>
+<script src="/static/app.js"></script></body></html>
