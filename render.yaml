@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: pillacurro
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 1 --threads 4 -b 0.0.0.0:$PORT app.server:app
+    envVars:
+      - key: PILLACURRO_ONLINE
+        value: "1"
+      - key: PILLACURRO_DATA
+        value: /tmp/pillacurro-data
+      - key: PILLACURRO_SECRET
+        generateValue: true
+      - key: PILLACURRO_BASE_URL
+        sync: false
+      - key: PILLACURRO_GOOGLE_CLIENT_ID
+        sync: false
+      - key: PILLACURRO_GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: PILLACURRO_LINKEDIN_CLIENT_ID
+        sync: false
+      - key: PILLACURRO_LINKEDIN_CLIENT_SECRET
+        sync: false

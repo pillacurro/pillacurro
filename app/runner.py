@@ -1,7 +1,7 @@
 """Motor de búsqueda propio de PillaCurro (sin Claude, gratuito y local).
 Busca ofertas con el navegador del propio usuario (sesiones que él inicia), las puntúa 0-100 contra su perfil,
 y por defecto NUNCA postula: deja cada candidatura en 'Pendientes de aprobar'. Solo con permiso explícito se envía."""
-import re, json, time, datetime, threading, urllib.parse
+import os, re, json, time, datetime, threading, urllib.parse
 from pathlib import Path
 import db
 
@@ -176,6 +176,9 @@ def _run(uid, rid, get_crit, source):
                 break
             demo = portal == "Modo demostración"
             if not demo and not crit.get("access", {}).get(portal):
+                continue
+            if not demo and os.environ.get("PILLACURRO_ONLINE") == "1":
+                add_log(rid, f"ℹ️ {portal}: en la versión online solo funciona el modo demostración. Para portales reales usa la app en tu equipo.")
                 continue
             add_log(rid, f"🌐 {'Probando con ofertas de ejemplo' if demo else 'Abriendo ' + portal}")
             offers = []

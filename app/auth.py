@@ -17,6 +17,8 @@ PROVIDERS = {
 
 
 def secret_key():
+    if os.environ.get("PILLACURRO_SECRET"):
+        return os.environ["PILLACURRO_SECRET"]
     f = db.DATA / "secret.key"
     db.DATA.mkdir(exist_ok=True)
     if not f.exists():
@@ -75,7 +77,7 @@ def create_user(email, name, pw=None, provider="local", pid=None, avatar=""):
 
 @bp.get("/api/auth/providers")
 def providers():
-    return jsonify({p: bool(cfg(p)) for p in PROVIDERS})
+    return jsonify({**{p: bool(cfg(p)) for p in PROVIDERS}, "online": os.environ.get("PILLACURRO_ONLINE") == "1"})
 
 
 @bp.post("/api/auth/oauth-config")

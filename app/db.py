@@ -1,7 +1,7 @@
-import sqlite3, json, threading
+import os, sqlite3, json, threading
 from pathlib import Path
 
-DATA = Path(__file__).resolve().parent.parent / "data"
+DATA = Path(os.environ.get("PILLACURRO_DATA") or Path(__file__).resolve().parent.parent / "data")
 _tl = threading.local()  # usuario activo en este hilo: cada usuario tiene su propia carpeta y base de datos
 
 

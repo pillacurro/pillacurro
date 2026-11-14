@@ -368,6 +368,7 @@ async function showAuth(mode = 'login') {
     ${err ? `<p class="err">${esc(err)}</p>` : ''}
     <button class="s" id="gg" style="width:100%;margin:4px 0">${prov.google ? 'Continuar con Google' : 'Activar Google (1 vez)'}</button>
     <button class="s" id="li" style="width:100%;margin:4px 0">${prov.linkedin ? 'Continuar con LinkedIn' : 'Activar LinkedIn (1 vez)'}</button>
+    ${prov.online ? '<p class="hint" style="background:rgba(178,106,0,.15);padding:8px;border-radius:6px">⚠️ Versión de pruebas online: no subas datos sensibles. Los datos pueden borrarse al actualizar la app.</p>' : ''}
     ${prov.google && prov.linkedin ? '' : '<p class="hint">Para entrar con Google o LinkedIn hay que activarlos una sola vez (pulsa el botón y te guío).</p>'}
     <p class="hint" style="text-align:center">— o con tu email —</p>
     ${reg ? '<label>Tu nombre</label><input id="an">' : ''}<label>Email</label><input id="ae" type="email" autocomplete="email"><label>Contraseña ${reg ? '(mínimo 8 caracteres)' : ''}</label><input id="ap" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}">

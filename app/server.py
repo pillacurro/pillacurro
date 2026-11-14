@@ -1,5 +1,5 @@
 """Backend local de la Microapp búsqueda de trabajo (Flask + SQLite). Solo escucha en 127.0.0.1."""
-import sys, datetime
+import os, sys, datetime
 from pathlib import Path
 from flask import Flask, jsonify, request, send_from_directory, send_file, abort, session
 
@@ -14,7 +14,8 @@ from tools import export_excel
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.secret_key = auth.secret_key()
-app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax", PERMANENT_SESSION_LIFETIME=datetime.timedelta(days=30))
+ONLINE = os.environ.get("PILLACURRO_ONLINE") == "1"
+app.config.update(SESSION_COOKIE_SECURE=ONLINE, SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax", PERMANENT_SESSION_LIFETIME=datetime.timedelta(days=30))
 app.register_blueprint(auth.bp)
 
 
@@ -250,6 +251,8 @@ def connect_portal(name):
     p = next((x for x in PORTALS if x["name"] == name and x["url"]), None)
     if not p:
         return jsonify(error="Portal desconocido"), 404
+    if ONLINE:
+        return jsonify(error="En la versión online no se pueden abrir portales: usa PillaCurro en tu equipo para buscar en portales reales."), 501
     uid = session["uid"]
 
     def done():
