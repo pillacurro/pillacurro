@@ -24,7 +24,7 @@ def guard():
     """Todo salvo la portada, los estáticos y el acceso exige sesión; fija la carpeta del usuario activo."""
     p = request.path
     db.set_user(None)
-    if p in ("/", "/privacidad", "/terminos") or p.startswith("/static/") or p.startswith("/auth/") or p in ("/api/auth/login", "/api/auth/register", "/api/auth/providers", "/api/auth/oauth-config", "/api/auth/logout", "/api/auth/me") and request.method != "DELETE":
+    if p in ("/", "/privacidad", "/terminos", "/guia") or p.startswith("/static/") or p.startswith("/auth/") or p in ("/api/auth/login", "/api/auth/register", "/api/auth/providers", "/api/auth/oauth-config", "/api/auth/logout", "/api/auth/me") and request.method != "DELETE":
         if p == "/api/auth/me" and session.get("uid"):
             db.set_user(session["uid"])
         return None
@@ -56,6 +56,11 @@ def body():
 @app.get("/privacidad")
 def privacidad():
     return send_from_directory(app.static_folder, "privacidad.html")
+
+
+@app.get("/guia")
+def guia():
+    return send_from_directory(app.static_folder, "guia.html")
 
 
 @app.get("/terminos")

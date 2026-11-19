@@ -10,6 +10,46 @@ App **gratuita y local, sin Claude ni servicios de pago**, que busca ofertas por
 5. **Permiso**: cada oferta que encaja aparece en *Pendientes de aprobar*. Solo si pulsas *Sí, puedes postular* se procede. Consentimientos de entrevistas con IA, datos nuevos y mensajes a reclutadores también esperan tu decisión.
 6. **Seguimiento**: tabla de postulaciones con estados, estadísticas por portal y por encaje, Excel, respuestas a cuestionarios y plantillas de mensajes.
 
+## Guía visual
+
+Del registro a la primera búsqueda, con capturas (datos de ejemplo): **[/guia](app/static/guia.html)** dentro de la app, o aquí:
+
+**1. Registrarse**
+
+![1. Registrarse](app/static/guia/01-registro.png)
+
+**2. Subir el CV**
+
+![2. Subir el CV](app/static/guia/02-subir-cv.png)
+
+**3. CV leído**
+
+![3. CV leído](app/static/guia/03-cv-leido.png)
+
+**4. Datos**
+
+![4. Datos](app/static/guia/04-datos.png)
+
+**5. Habilidades**
+
+![5. Habilidades](app/static/guia/05-habilidades.png)
+
+**6. Puestos**
+
+![6. Puestos](app/static/guia/06-orientacion.png)
+
+**7. Lugar y salario**
+
+![7. Lugar y salario](app/static/guia/07-lugar-salario.png)
+
+**8. Permisos**
+
+![8. Permisos](app/static/guia/08-permisos.png)
+
+**9. Lanzar búsqueda**
+
+![9. Lanzar búsqueda](app/static/guia/09-inicio.png)
+
 ## Arquitectura
 ```
  Navegador (JS vanilla)  ──►  Flask (app/server.py, 127.0.0.1:5000)

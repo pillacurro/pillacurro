@@ -382,7 +382,7 @@ async function showAuth(mode) {
       ${reg ? '<label>Tu nombre</label><input id="an">' : ''}<label>Email</label><input id="ae" type="email" autocomplete="email"><label>Contraseña ${reg ? '(mínimo 8 caracteres)' : ''}</label><input id="ap" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}">
       <p id="am"></p><button class="b" id="ago" style="width:100%">${reg ? 'Crear cuenta' : 'Entrar'}</button>
       </details>
-    <p class="hint" style="font-size:12px">Al continuar aceptas las <a href="/terminos">condiciones</a> y la <a href="/privacidad">privacidad</a>.</p>
+    <p class="hint" style="font-size:12px">Al continuar aceptas las <a href="/terminos">condiciones</a> y la <a href="/privacidad">privacidad</a>. · <a href="/guia">Guía paso a paso</a></p>
     ${!prov.online && !(prov.google && prov.linkedin) ? `<p class="hint" style="font-size:12px">Administrador: <a href="#" id="setg">${prov.google ? '' : 'activar Google'}</a> ${!prov.google && !prov.linkedin ? '·' : ''} <a href="#" id="setl">${prov.linkedin ? '' : 'activar LinkedIn'}</a></p>` : ''}</div>`;
   $('#tl').onclick = () => showAuth('login'); $('#tr').onclick = () => showAuth('register');
   $('#gg').onclick = () => prov.google ? location.href = '/auth/google?mode=' + mode : (!prov.online && oauthSetup('google'));
